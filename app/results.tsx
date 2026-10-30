@@ -1,0 +1,18 @@
+"use client";
+import { ArrowRight, BarChart3, CheckCircle2, LockKeyhole, RefreshCw, Trophy, UserRound, Vote } from "lucide-react";
+import { isVoting,roundLabel,type ElectionSnapshot,type RoundResult } from "./election-rules";
+import {useState} from 'react';
+import {RoundReport} from './counting-report';
+export {RoundReport} from './counting-report';
+export default function Results({data,onRefresh,refreshing}:{data:ElectionSnapshot;onRefresh:()=>void;refreshing:boolean}){
+ const [finishedRound,setFinishedRound]=useState<number|null>(null);
+ const winner=data.winner;
+ return <section className="results-section"><div className="section-heading"><div><div className="section-label">04 / TRANSPARÊNCIA DO GRUPO</div><h2>Cada voto conta. Acompanhe a virada.</h2><p className="section-intro">Acompanhe os boletins oficiais da eleição da ANTK.</p></div><button className="outline-button" onClick={onRefresh} disabled={refreshing}><RefreshCw size={15}/>Atualizar</button></div>
+ {winner&&finishedRound===data.activeRound&&<div className="winner-panel"><div className="winner-symbol"><Trophy size={48} strokeWidth={1.4}/></div><div><span className="winner-eyebrow">ELEITO PELA RESENHA</span><h3>{winner.name}</h3><p>Novo administrador da ANTK · Número {winner.number}</p><span className="winner-joke">O cargo é seu. A cobrança é do grupo inteiro.</span></div><div className="winner-score"><strong>{winner.percent.toLocaleString("pt-BR",{maximumFractionDigits:1})}%</strong><span>{winner.votes} votos válidos em {roundLabel(data.activeRound).toLowerCase()}</span></div></div>}
+ {isVoting(data.phase)&&<div className="counting-live"><Vote size={26}/><div><b>{roundLabel(data.activeRound)} em andamento</b><p>{data.currentTotal} voto{data.currentTotal!==1?"s":""} recebido{data.currentTotal!==1?"s":""}. Nomes e escolhas deste turno ficam ocultos até a comissão encerrar a urna.</p></div><span className="live-label"><span className="online-dot"/>URNA ABERTA</span></div>}
+ {data.phase==="round1_closed"&&<div className="notice"><BarChart3 size={23}/><div><b>{data.cutoff&&data.cutoff.pool.length>data.cutoff.slots?"Empate na classificação para o segundo turno.":"Primeiro turno apurado. Próxima etapa: a decisão final."}</b><p>{data.cutoff&&data.cutoff.pool.length>data.cutoff.slots?"A comissão precisa registrar o desempate entre os empatados antes de abrir o segundo turno. Nenhum candidato será escolhido automaticamente por ordem de cadastro.":"Os dois mais votados seguem para o segundo turno, que será aberto pela comissão eleitoral."}</p></div></div>}
+ {data.finalTie&&<div className="notice"><InfoIcon/><div><b>{data.results.at(-1)?.valid?"Empate no resultado final.":"Nenhum voto válido neste turno."}</b><p>Ainda não há administrador eleito. A comissão pode abrir uma nova votação de desempate entre os mesmos dois finalistas. Todos poderão votar novamente, uma vez nessa nova votação.</p></div></div>}
+ {data.results.length===0?<div className="empty"><LockKeyhole size={40}/><h3>A apuração vem depois do voto.</h3><p>{data.phase==="registration"?"As inscrições estão abertas. O primeiro boletim aparecerá quando o primeiro turno for encerrado.":data.phase==="registration_closed"?"As candidaturas foram encerradas. A comissão ainda precisa abrir o primeiro turno. Nenhum voto está sendo recebido.":"A urna está recebendo votos. O resultado será publicado assim que este turno for encerrado."}</p></div>:<div className="reports">{[...data.results].reverse().map(result=><RoundReport key={result.round} result={result} finalists={data.finalists} onComplete={()=>setFinishedRound(current=>Math.max(current??0,result.round))}/>)}</div>}
+ </section>;
+}
+function InfoIcon(){return <BarChart3 size={23}/>;}
