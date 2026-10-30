@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "0cb856a76dad97545885688576670d57f8d3d9c6",
+  "originalWorkingTreeClean": true,
+  "originalTrackedFiles": 157,
+  "copyMethod": "git ls-files; byte-for-byte copy of current tracked files",
+  "knownLocalSecretValuesChecked": 1,
+  "knownLocalSecretMatches": 0,
+  "credentialPatternMatches": 0,
+  "gitHistoryIncluded": false,
+  "productionDatabaseIncluded": false,
+  "hostingModified": false,
+  "limitations": "Pattern and known-value checks are not a guarantee that every possible secret has been detected.",
+  "originalFileHashesVerified": 157,
+  "unitTestSuitesPassed": [
+    "election-rules",
+    "counting",
+    "candidate-photo-match",
+    "proposal-length"
+  ],
+  "integrationTestsRun": false,
+  "freshInstallOrBuildRun": false,
+  "finalExportFileCount": 160
+}
