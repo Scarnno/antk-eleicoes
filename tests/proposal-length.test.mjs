@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {validateCandidate} from '../app/election-rules.ts';
+import {zipFiles} from '../app/zip.ts';
+const base={name:'Candidato QA',number:'85'};
+for(const length of [2001,16001,50000,250000])assert.equal(validateCandidate({...base,proposals:'a'.repeat(length)}),null,`proposal length ${length}`);
+assert.equal(validateCandidate({...base,proposals:'a'.repeat(19)}),'Escreva suas propostas com pelo menos 20 caracteres.');
+assert.equal(validateCandidate({...base,proposals:42}),'Escreva suas propostas com pelo menos 20 caracteres.');
+const zip=zipFiles([{name:'pagina-01.txt',data:new TextEncoder().encode('123456789')},{name:'pagina-02.txt',data:new TextEncoder().encode('Propostas completas, sem cortes.')}]);
+assert.equal(new DataView(zip.buffer).getUint32(14,true),0xcbf43926,'standard CRC32 vector');
+fs.mkdirSync('work',{recursive:true});fs.writeFileSync('work/proposal-zip-test.zip',zip);
+console.log('Proposal validation accepts texts beyond both former caps; multipart export ZIP fixture created.');

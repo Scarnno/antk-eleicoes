@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {photoForName,matchCandidatePhoto} from '../app/candidate-photo-match.ts';
+const photos=JSON.parse(fs.readFileSync('public/candidate-photos.json','utf8').replace(/^\uFEFF/,''));
+let checks=0;
+function expect(name,key){assert.equal(photoForName(name,photos),key?photos[key]:null,name);checks++;}
+for(const name of Object.keys(photos))expect(name,name);
+expect('Mateus Souza Lima','mateus souza');
+expect('Mateus de Souza Lima','mateus souza');
+expect('MATEUS  SOUZA  LIMA','mateus souza');
+expect('Mateus Silva de Souza Lima','mateus souza');
+expect('Higor Galdino','higor almeida');
+expect('Higor Galdino de Almeida','higor almeida');
+expect('HÍGOR  GALDINO DE ALMEIDA','higor almeida');
+expect('Higor de Almeida','higor almeida');
+expect('Carlos Augusto Henrique Silva','carlos henrique');
+expect('Pedro Thiago da Silva','pedro thiago');
+expect('Pedro Mateus de Souza Lima','pedro matheus');
+expect('Pedro Matheus','pedro matheus');
+expect('Pedro Matheus de Souza Lima','pedro matheus');
+expect('Pedro Ryuk Silva','pedro ryuk');
+expect('Luan Gabriel Oliveira','luan gabriel');
+expect('Luan de Mendes Silva','luan mendes');
+expect('Brenno da Silva Salgueiro','brenno salgueiro');
+expect('Liuken-Monteiro da Silva','liuken monteiro');
+expect('Pedro',null);expect('Luan',null);expect('Pedro Silva',null);
+expect('Luan Gabriel Mendes',null);expect('Pedro Thiago Mateus',null);
+expect('Mateus Souza Lima Pedro Thiago','mateus souza');
+expect('Souza Mateus',null);expect('',null);expect('Fulano de Tal',null);
+assert.equal(matchCandidatePhoto('Luan Gabriel Mendes',photos).ambiguous,true);checks++;
+assert.equal(photoForName('Higor Galdino',{'mateus souza':'/candidate-photos/mateus-souza.png'}),null);checks++;
+console.log(`${checks} photo-matching checks passed: all 12 candidates, additional surnames, supplied aliases, accents, particles and ambiguous names.`);
+

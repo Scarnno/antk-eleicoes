@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const base='http://127.0.0.1:5174';
+const key=fs.readFileSync('.dev.vars','utf8').match(/^ANTK_ADMIN_KEY=(.+)$/m)[1];
+async function post(path,data,auth=true){const r=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',...(auth?{Authorization:'Bearer '+key}:{})},body:JSON.stringify(data)});return {status:r.status,data:await r.json()};}
+const get=async()=>await (await fetch(base+'/api/election')).json();
+assert.equal((await get()).candidates.length,0,'isolated QA must start empty');
+for(const [name,number] of [['Excluir A','11'],['Excluir B','22'],['Preservar C','33']])assert.equal((await post('/api/election',{action:'register',name,number,proposals:'Uma proposta exclusiva para testar a remoção com segurança.'})).status,201);
+const state=await get(),ids=state.candidates.filter(c=>c.name.startsWith('Excluir')).map(c=>c.id);
+const data={action:'remove_unvoted_candidates',version:state.version,candidateIds:ids};
+assert.equal((await post('/api/admin',data,false)).status,401,'unauthorized deletion rejected');
+assert.equal((await post('/api/admin',{...data,version:999})).status,409,'stale removal rejected');
+const removed=await post('/api/admin',data);assert.equal(removed.status,200);assert.equal(removed.data.removed,2);assert.equal(removed.data.candidates.length,1);assert.equal(removed.data.candidates[0].name,'Preservar C');
+assert.equal((await post('/api/admin',data)).status,409,'replay rejected');
+assert.equal((await get()).candidates[0].name,'Preservar C','unselected candidate preserved');
+await post('/api/election',{action:'register',name:'Preservar D',number:'44',proposals:'Outra proposta exclusiva para garantir dois candidatos.'});
+const before=await get();assert.equal((await post('/api/admin',{action:'open_first',version:before.version})).status,200);
+const active=await get();assert.equal((await post('/api/admin',{action:'remove_unvoted_candidates',version:active.version,candidateIds:active.candidates.map(c=>c.id)})).status,409,'deletion blocked after voting opens');
+assert.equal((await get()).candidates.length,2);
+console.log('Candidate cleanup verified: authentication, stale requests, exact selection, replay protection and closed-registration guard.');

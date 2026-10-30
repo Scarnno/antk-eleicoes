@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {classify,validFinalists,normalizeName} from '../app/election-rules.ts';
+const c=(id,votes)=>({id,votes,name:id,number:id,proposals:'',percent:0});
+const tied=classify([c('a',5),c('b',3),c('c',3),c('d',1)]);
+assert.deepEqual(tied,{locked:['a'],pool:['b','c'],slots:1});
+assert.equal(validFinalists(['a','b'],tied),true);
+assert.equal(validFinalists(['a','c'],tied),true);
+assert.equal(validFinalists(['b','c'],tied),false);
+assert.equal(validFinalists(['a','d'],tied),false);
+assert.equal(validFinalists(['a','a'],tied),false);
+const allTied=classify([c('a',2),c('b',2),c('c',2)]);
+assert.deepEqual(allTied,{locked:[],pool:['a','b','c'],slots:2});
+assert.equal(validFinalists(['a','c'],allTied),true);
+assert.equal(validFinalists(['a'],allTied),false);
+assert.equal(classify([c('a',1)]),null);
+assert.equal(normalizeName('  PÁULO  de Souza '),'paulo de souza');
+console.log('11 rule checks passed, including tied qualification and mandatory higher-ranked finalists.');
